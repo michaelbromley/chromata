@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Chromata</title>
+
+    <script src="vendor/system.js"></script>
+    <script>
+      System.transpiler = '6to5';
+    </script>
+
+    <style>
+        body {
+            background-color: black;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- inject:js -->
+<!-- endinject -->
+<script>
+    System.import('scripts/init');
+</script>
+</body>
+</html>
