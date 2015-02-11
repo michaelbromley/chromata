@@ -1,58 +1,75 @@
+import PathQueue from 'scripts/pathQueue';
+
 export default class PathFinder {
 
-    constructor(pixelArray, targetColor, initX = 0, initY = 0) {
+    constructor(pixelArray, workingArray, targetColor, initX = 0, initY = 0) {
         this.pixelArray = pixelArray;
+        this.arrayWidth = pixelArray[0].length;
+        this.arrayHeight = pixelArray.length;
         this.x = Math.round(initX);
         this.y = Math.round(initY);
-        this.path = [];
-        this.visitedPixels = [];
+
+        this.pathQueue = new PathQueue(5000);
+        this.pathQueue.put([this.x, this.y, 0]);
+        this.pathQueue.put([this.x, this.y, 0]);
+
+        this.velocity = [10, 20];
 
         if (targetColor) {
             this.targetColor = typeof targetColor === 'string' ? this._hexToRgb(targetColor) : targetColor;
         } else {
             this.targetColor = pixelArray[initY][initX];
         }
-
-        this.path = [];
-        this.visitedPixels = [
-            [this.x, this.y]
-        ];
-
-        this.searchSize = 40; // size in pixels of the square search area when looking for next pixel to travel to.
     }
 
-    getPath() {
+    /**
+     * Algorithm for finding the next point by picking the closest match out of an arc-shaped array of possible pixels
+     * arranged pointing in the direction of velocity.
+     * @returns {*}
+     */
+    getNextPoint(context) {
 
-        var arrayWidth = this.pixelArray[0].length,
-            arrayHeight = this.pixelArray.length;
+        // get current angle of velocity
+        var theta = this._getVelocityAngle();
+        var closestColor = 1000000;
+        var nextPixel = this.pathQueue.get(-2);
 
-        for(let i = 0; i < 10000; i ++) {
+        var arcSize = Math.PI / 2; // the extent of the arc of pixels that will be checked
+        var radius = Math.sqrt(Math.pow(this.velocity[0], 2) + Math.pow(this.velocity[1], 2));
+        var sampleSize = 10; // how many pixels to test for best fit
+        var newVelocity;
 
-            let closestMatch = 1000000,
-                nextPoint,
-                search = this._getSearchBox(arrayWidth, arrayHeight, this.x, this.y),
-                distance = 10000,
-                threshold = 250;
+        for(let angle = theta - arcSize / 2 , deviance = -sampleSize/2; angle <= theta + arcSize / 2; angle += arcSize / sampleSize, deviance ++) {
+            let x = this.x + Math.round(radius * Math.cos(angle));
+            let y = this.y + Math.round(radius * Math.sin(angle));
 
-            do {
-                let randomX = Math.min(Math.round(Math.random() * this.searchSize) + search.startX, arrayWidth - 1),
-                    randomY = Math.min(Math.round(Math.random() * this.searchSize) + search.startY, arrayHeight - 1),
-                    currentPixel = this.pixelArray[randomY][randomX];
+            if (this._isInRange(x, y) && !this.pathQueue.contains([x, y])) {
+                let currentPixel = this.pixelArray[y][x];
+                let colorDistance = this._getColorDistance(currentPixel);
+                //context.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                //context.fillRect(x, y, 1, 1);
 
-                distance = this._getColorDistance(currentPixel);
-                nextPoint = [randomX, randomY, 255 - distance];
+                if (colorDistance < closestColor) {
+                    nextPixel = [x, y, 255 - colorDistance];
+                    closestColor = colorDistance;
+                    newVelocity = ((sampleSize/2 - Math.abs(deviance)) / 5) * 0.01 + 0.995;
+                }
             }
-            while(threshold < distance);
-
-
-            this.visitedPixels.push(nextPoint);
-            this.x = nextPoint[0];
-            this.y = nextPoint[1];
-            this.path.push(nextPoint);
-
         }
 
-        return this.path;
+        this.velocity = [(nextPixel[0] - this.x) * newVelocity, (nextPixel[1] - this.y) * newVelocity];
+        this.y = nextPixel[1];
+        this.x = nextPixel[0];
+        this.pathQueue.put(nextPixel);
+        return nextPixel;
+    }
+
+    getCurrentPoint() {
+        return this.pathQueue.get(-2);
+    }
+
+    getControlPoint() {
+        return this.pathQueue.get(-1);
     }
 
     getColor() {
@@ -61,6 +78,37 @@ export default class PathFinder {
             g: this.targetColor[1],
             b: this.targetColor[2]
         };
+    }
+
+    /**
+     * Get the angle indicated by the velocity vector, correcting for the case that the angle would
+     * take the pathfinder off the image canvas, in which case the angle will be set towards the
+     * centre of the canvas.
+     *
+     * @returns {*}
+     * @private
+     */
+    _getVelocityAngle() {
+        var projectedX = this.x + this.velocity[0],
+            projectedY = this.y + this.velocity[1],
+            margin = 20,
+            angle;
+
+        if (projectedX <= margin) {
+            angle = 0;
+        } else if (this.arrayWidth - margin <= projectedX) {
+            angle = Math.PI;
+        } else if (projectedY <= margin) {
+            angle = Math.PI / 2;
+        } else if (this.arrayHeight - margin <= projectedY) {
+            angle = 3 / 2 * Math.PI;
+        } else {
+            let  dy = this.y + this.velocity[1] - this.y;
+            let  dx = this.x + this.velocity[0] - this.x;
+            angle = Math.atan2(dy, dx);
+        }
+
+        return angle;
     }
 
     /**
@@ -117,11 +165,29 @@ export default class PathFinder {
         return distance;
     }
 
+    _setPixelAsVisited(point) {
+        this.visitedPixels.push(point);
+    }
+
     _pixelNotYetVisited(x, y) {
         var matches = this.visitedPixels.filter((point) => {
             return point[0] === x && point[1] === y;
         });
 
         return matches.length === 0;
+    }
+
+    /**
+     * Return true if the x, y points lie within the image dimentions.
+     * @param x
+     * @param y
+     * @returns {boolean}
+     * @private
+     */
+    _isInRange(x, y) {
+        return 0 < x &&
+                x < this.arrayWidth &&
+                0 < y &&
+                y < this.arrayHeight;
     }
 }
