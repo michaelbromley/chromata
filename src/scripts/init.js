@@ -1,10 +1,21 @@
 import Chromata from 'scripts/chromata';
 
-const imageUrl = 'assets/images/tree.jpg';
+const imageUrl = 'assets/images/face.jpg';
 
-var chromata = new Chromata(imageUrl);
+var image = document.querySelector('#image');
 
-chromata.run();
+image.addEventListener('click', () => {
+    new Chromata(image, {
+        pathFinderCount: 60,
+        speed: 4,
+        turningAngle: Math.PI/ 0.5,
+        colorMode: 'color',
+        lineWidth: 1,
+        lineMode: 'square',
+        compositeOperation: 'default'
+    });
+});
+
 
 
 

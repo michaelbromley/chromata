@@ -4,24 +4,38 @@ import PathRenderer from 'scripts/pathRenderer';
 
 export default class Chromata {
 
-    constructor(imageUrl) {
-        var outputCanvas = document.createElement('canvas'),
-            outputContext = outputCanvas.getContext('2d'),
+    constructor(imageElement, options) {
+        var renderCanvas = document.createElement('canvas'),
+            renderContext = renderCanvas.getContext('2d'),
+            offscreenCanvas = document.createElement('canvas'),
+            offscreenContext = offscreenCanvas.getContext('2d'),
             tmpCanvas = document.createElement('canvas'),
             tmpContext = tmpCanvas.getContext('2d'),
             image = new Image(),
+            parentElement,
             loader;
 
-        outputContext.globalCompositeOperation = 'screen';
-        image.src = imageUrl;
+        this.options = {
+            pathFinderCount: options.pathFinderCount || 1,
+            speed: options.speed || 3,
+            turningAngle: options.turningAngle || Math.PI,
+            colorMode: options.colorMode || 'color',
+            lineWidth: options.lineWidth || 2,
+            lineMode: options.lineMode || 'smooth',
+            compositeOperation: options.compositeOperation || 'default'
+        };
 
-        loader = new Promise((resolve) => {
+        image.src = imageElement.src;
+        parentElement = imageElement.parentNode;
+
+        loader = new Promise(resolve => {
             image.addEventListener('load', () => {
-                tmpCanvas.width = outputCanvas.width = image.width;
-                tmpCanvas.height = outputCanvas.height = image.height;
+                tmpCanvas.width = renderCanvas.width = offscreenCanvas.width = image.width;
+                tmpCanvas.height = renderCanvas.height = offscreenCanvas.height = image.height;
                 tmpContext.drawImage(image, 0, 0);
-                //document.body.appendChild(tmpCanvas);
-                document.body.appendChild(outputCanvas);
+
+                parentElement.removeChild(imageElement);
+                parentElement.appendChild(renderCanvas);
 
                 this.imageArray = this._getImageArray(tmpContext);
                 this.workingArray = this._getWorkingArray(tmpContext);
@@ -30,41 +44,82 @@ export default class Chromata {
         });
 
         this.imageArray = [];
-        this.context = outputContext;
+        this.renderContext = renderContext;
+        this.offscreenContext = offscreenContext;
         this.image = image;
-        this.loader = loader;
+
+        this.renderContext.globalCompositeOperation = 'lighten';
+
+        loader.then(() => this._run());
     }
 
-    run() {
+    /**
+     * Start the animation
+     * @private
+     */
+    _run() {
 
-        this.loader.then(() => {
+        var tick,
+            renderers = [],
+            pathFinders = this._initPathFinders(),
+            renderOptions = {
+                colorMode: this.options.colorMode,
+                lineWidth: this.options.lineWidth,
+                lineMode: this.options.lineMode,
+                compositeOperation: this.options.compositeOperation,
+                speed: this.options.speed
+            };
 
-            var pathFinders = [],
-                renderers = [];
 
-            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, '#0000ff', 250, 250));
-            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, '#00ff00', 250, 250));
-            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, '#ff0000', 250, 250));
 
-            console.time('getting paths');
-            pathFinders.forEach((pathFinder) => {
-                renderers.push(new PathRenderer(this.context, pathFinder));
-            });
-            console.timeEnd('getting paths');
-
-            document.querySelector('canvas').addEventListener('click', () => {
-                //renderers.forEach(renderer => renderer.drawNextLine());
-            });
-
-            setInterval(() => {
-                renderers.forEach(renderer => renderer.drawNextLine());
-            }, 300);
-
+        pathFinders.forEach((pathFinder) => {
+            renderers.push(new PathRenderer(this.renderContext, pathFinder, renderOptions));
         });
+
+        tick = () => {
+            renderers.forEach(renderer => renderer.drawNextLine());
+
+            //this.renderContext.drawImage(this.offscreenContext.canvas, 0, 0);
+            requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
     }
 
+    /**
+     * Create the pathfinders
+     * @returns {Array}
+     * @private
+     */
+    _initPathFinders() {
+        var pathFinders = [],
+            width = this.image.width,
+            height = this.image.height,
+            count = this.options.pathFinderCount,
+            unit = width / count,
+            options = {
+                speed: this.options.speed,
+                turningAngle: this.options.turningAngle
+            };
 
+        for (let i = 1; i < count + 1; i++) {
+            let xPos = unit * i - unit / 2,
+                yPos = height - this.options.speed,
+                color;
 
+            if (i % 3 === 0) {
+                color = '#0000ff';
+            } else if (i % 2 === 0) {
+                color = '#00ff00';
+            } else {
+                color = '#ff0000';
+            }
+
+            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, color, xPos, yPos, options));
+        }
+
+        return pathFinders;
+    }
 
     /**
      * Get a 2d array (width x height) representing each pixel of the source as an [r,g,b,a] array.
@@ -96,7 +151,7 @@ export default class Chromata {
     }
 
     /**
-     * Create a 2d array with the same dimentions as the image, but filled with "null" pixels that
+     * Create a 2d array with the same dimensions as the image, but filled with "null" pixels that
      * will get filled in when a pathFinder visits each pixel. Allows multiple pathFinders to
      * communicate which pixels have been covered.
      *
@@ -114,7 +169,7 @@ export default class Chromata {
             workingArray.push([]);
 
             for(let col = 0; col < width; col ++) {
-                workingArray[row].push([null, null, null]);
+                workingArray[row].push([false, false, false]);
             }
         }
 
