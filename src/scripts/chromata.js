@@ -7,8 +7,6 @@ export default class Chromata {
     constructor(imageElement, options) {
         var renderCanvas = document.createElement('canvas'),
             renderContext = renderCanvas.getContext('2d'),
-            offscreenCanvas = document.createElement('canvas'),
-            offscreenContext = offscreenCanvas.getContext('2d'),
             tmpCanvas = document.createElement('canvas'),
             tmpContext = tmpCanvas.getContext('2d'),
             image = new Image(),
@@ -31,8 +29,8 @@ export default class Chromata {
 
         loader = new Promise(resolve => {
             image.addEventListener('load', () => {
-                tmpCanvas.width = renderCanvas.width = offscreenCanvas.width = image.width;
-                tmpCanvas.height = renderCanvas.height = offscreenCanvas.height = image.height;
+                tmpCanvas.width = renderCanvas.width = image.width;
+                tmpCanvas.height = renderCanvas.height =  image.height;
                 tmpContext.drawImage(image, 0, 0);
 
                 parentElement.removeChild(imageElement);
@@ -46,7 +44,6 @@ export default class Chromata {
 
         this.imageArray = [];
         this.renderContext = renderContext;
-        this.offscreenContext = offscreenContext;
         this.image = image;
 
         this.renderContext.globalCompositeOperation = 'lighten';
@@ -79,8 +76,6 @@ export default class Chromata {
 
         tick = () => {
             renderers.forEach(renderer => renderer.drawNextLine());
-
-            //this.renderContext.drawImage(this.offscreenContext.canvas, 0, 0);
             requestAnimationFrame(tick);
         };
 
