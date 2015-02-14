@@ -12,8 +12,8 @@ export default class PathFinder {
         this.x = Math.round(initX);
         this.y = Math.round(initY);
         this.options = options;
-
-        this.velocity = [0, - (options.speed || 4)];
+        this.pathQueue = new PathQueue(10);
+        this.velocity = options.startingVelocity;
 
         this.targetColor = typeof targetColor === 'string' ? this._hexToRgb(targetColor) : targetColor;
 
@@ -42,10 +42,10 @@ export default class PathFinder {
         do {
             result = this._getNextPristinePixel();
             i++;
-        } while(false);
-        //} while(i <= limit && result.isPristine === false);
+        //} while(false);
+        } while(i <= limit && result.isPristine === false);
 
-        if (limit <= i) {
+       /* if (limit <= i) {
             // could not find a pristine pixel, so choose a random location
             let x = Math.floor(Math.random() * this.arrayWidth),
                 y = Math.floor(Math.random() * this.arrayHeight);
@@ -55,7 +55,7 @@ export default class PathFinder {
             this.y = y;
             this.x = x;
             result.nextPixel = [x, y, MAX - colorDistance]
-        }
+        }*/
 
         return result.nextPixel;
     }
@@ -68,28 +68,33 @@ export default class PathFinder {
             defaultNextPixel,
             arcSize = this.options.turningAngle,
             radius = Math.round(Math.sqrt(Math.pow(this.velocity[0], 2) + Math.pow(this.velocity[1], 2))),
-            sampleSize = 4;//Math.round(arcSize) * Math.ceil(radius/20) * 2; // how many pixels to test for best fit
+            sampleSize = 4; // how many surrounding pixels to test for next point
 
         for(let angle = theta - arcSize / 2 , deviance = -sampleSize/2; angle <= theta + arcSize / 2; angle += arcSize / sampleSize, deviance ++) {
-            let x = this.x + Math.round(radius * Math.cos(angle));
-            let y = this.y + Math.round(radius * Math.sin(angle));
-            let colorDistance = MAX;
+            let x = this.x + Math.round(radius * Math.cos(angle)),
+                y = this.y + Math.round(radius * Math.sin(angle)),
+                colorDistance = MAX;
 
             if (this._isInRange(x, y)) {
 
-                let visited = this.workingArray[y][x][this.rgbIndex];
+                let visited = this.workingArray[y][x][this.rgbIndex],
+                    currentPixel = this.pixelArray[y][x],
+                    alpha = currentPixel[3];
 
-                let currentPixel = this.pixelArray[y][x];
                 colorDistance = this._getColorDistance(currentPixel);
 
-                if (0 < colorDistance && colorDistance < closestColor  && !visited) {
+                if (0 < colorDistance && colorDistance < closestColor  && !visited && alpha === MAX) {
                     nextPixel = [x, y, MAX - colorDistance];
                     closestColor = colorDistance;
                 }
             }
 
             if (deviance === 0) {
-                defaultNextPixel = [x, y, MAX - colorDistance];
+                if (this.pixelArray[y][x][3] === MAX) {
+                    defaultNextPixel = [x, y, MAX - colorDistance];
+                } else {
+                    defaultNextPixel = this.pathQueue.get(-2);
+                }
             }
         }
 
@@ -99,8 +104,8 @@ export default class PathFinder {
         this.velocity = [nextPixel[0] - this.x, nextPixel[1] - this.y];
         this.y = nextPixel[1];
         this.x = nextPixel[0];
-
         this._updateWorkingArray(nextPixel[1], nextPixel[0]);
+        this.pathQueue.put(nextPixel);
 
         return {
             nextPixel: nextPixel,
@@ -185,9 +190,9 @@ export default class PathFinder {
      */
     _isInRange(x, y) {
         return 0 < x &&
-                x < this.arrayWidth &&
-                0 < y &&
-                y < this.arrayHeight;
+            x < this.arrayWidth &&
+            0 < y &&
+            y < this.arrayHeight;
     }
 
     _updateWorkingArray(row, col) {

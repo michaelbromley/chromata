@@ -17,6 +17,7 @@ export default class Chromata {
 
         this.options = {
             pathFinderCount: options.pathFinderCount || 1,
+            origin: options.origin || 'bottom',
             speed: options.speed || 3,
             turningAngle: options.turningAngle || Math.PI,
             colorMode: options.colorMode || 'color',
@@ -93,32 +94,92 @@ export default class Chromata {
      */
     _initPathFinders() {
         var pathFinders = [],
-            width = this.image.width,
-            height = this.image.height,
             count = this.options.pathFinderCount,
-            unit = width / count,
+            origins = this.options.origin.split(' '),
+            pathFindersPerOrigin = count / origins.length,
             options = {
                 speed: this.options.speed,
                 turningAngle: this.options.turningAngle
             };
 
-        for (let i = 1; i < count + 1; i++) {
-            let xPos = unit * i - unit / 2,
-                yPos = height - this.options.speed,
-                color;
-
-            if (i % 3 === 0) {
-                color = '#0000ff';
-            } else if (i % 2 === 0) {
-                color = '#00ff00';
-            } else {
-                color = '#ff0000';
-            }
-
-            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, color, xPos, yPos, options));
+        if (-1 < origins.indexOf('bottom')) {
+            this._seedBottom(pathFindersPerOrigin, pathFinders, options);
+        }
+        if (-1 < origins.indexOf('top')) {
+            this._seedTop(pathFindersPerOrigin, pathFinders, options);
+        }
+        if (-1 < origins.indexOf('left')) {
+            this._seedLeft(pathFindersPerOrigin, pathFinders, options);
+        }
+        if (-1 < origins.indexOf('right')) {
+            this._seedRight(pathFindersPerOrigin, pathFinders, options);
         }
 
         return pathFinders;
+    }
+
+    _seedTop(count, pathFinders, options) {
+        var width = this.image.width,
+            unit = width / count,
+            xPosFn = i => unit * i - unit / 2,
+            yPosFn = () => this.options.speed;
+
+        options.startingVelocity = [0, this.options.speed];
+        this._seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options);
+    }
+
+    _seedBottom(count, pathFinders, options) {
+        var width = this.image.width,
+            height = this.image.height,
+            unit = width / count,
+            xPosFn = i => unit * i - unit / 2,
+            yPosFn = () => height - this.options.speed;
+
+        options.startingVelocity = [0, -this.options.speed];
+        this._seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options);
+    }
+
+    _seedLeft(count, pathFinders, options) {
+        var height = this.image.height,
+            unit = height / count,
+            xPosFn = () => this.options.speed,
+            yPosFn = i => unit * i - unit / 2;
+
+        options.startingVelocity = [this.options.speed, 0];
+        this._seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options);
+    }
+
+    _seedRight(count, pathFinders, options) {
+        var width = this.image.width,
+            height = this.image.height,
+            unit = height / count,
+            xPosFn = () => width - this.options.speed,
+            yPosFn = i => unit * i - unit / 2;
+
+        options.startingVelocity = [-this.options.speed, 0];
+        this._seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options);
+    }
+
+    _seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options) {
+        for (let i = 1; i < count + 1; i++) {
+            let color = this._indexToRgbString(i),
+                xPos = xPosFn(i),
+                yPos = yPosFn(i);
+
+            pathFinders.push(new PathFinder(this.imageArray, this.workingArray, color, xPos, yPos, options));
+        }
+    }
+
+    _indexToRgbString(i) {
+        var color;
+        if (i % 3 === 0) {
+            color = '#0000ff';
+        } else if (i % 2 === 0) {
+            color = '#00ff00';
+        } else {
+            color = '#ff0000';
+        }
+        return color;
     }
 
     /**

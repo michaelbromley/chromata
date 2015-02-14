@@ -6,13 +6,14 @@ var image = document.querySelector('#image');
 
 image.addEventListener('click', () => {
     new Chromata(image, {
-        pathFinderCount: 60,
-        speed: 4,
-        turningAngle: Math.PI/ 0.5,
+        pathFinderCount: 150,
+        speed: 5,
+        turningAngle: Math.PI/0.5,
         colorMode: 'color',
-        lineWidth: 1,
+        lineWidth: 2,
         lineMode: 'square',
-        compositeOperation: 'default'
+        compositeOperation: 'screen',
+        origin: 'bottom top left right'
     });
 });
 
