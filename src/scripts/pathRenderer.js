@@ -1,5 +1,6 @@
-
-
+/**
+ * Renders the points created by a P
+ */
 export default class PathRenderer {
 
     constructor(context, pathFinder, options) {
@@ -29,8 +30,14 @@ export default class PathRenderer {
             this.controlPoint = nextPoint;
         }
 
-        var midX = (this.controlPoint[0] + nextPoint[0]) / 2;
-        var midY = (this.controlPoint[1] + nextPoint[1]) / 2;
+       /* this.context.fillStyle = '#00ff00';
+        this.context.fillRect(this.controlPoint[0] - 3,this.controlPoint[1], 4, 4);
+        this.context.fillStyle = '#0000ff';
+        this.context.fillRect(nextPoint[0] - 3,nextPoint[1], 2, 2);*/
+
+        var midX = Math.round((this.controlPoint[0] + nextPoint[0]) / 2);
+        var midY = Math.round((this.controlPoint[1] + nextPoint[1]) / 2);
+        var midColor = Math.floor((this.position[2] + nextPoint[2]) / 2);
 
         var dx = nextPoint[0] - this.position[0];
         var dy = nextPoint[1] - this.position[1];
@@ -40,18 +47,24 @@ export default class PathRenderer {
             let colorValue = nextPoint[2];
 
             this.context.globalCompositeOperation = this.compositeOperation;
-            this.context.strokeStyle = this._getStrokeColor(colorValue);
+
+            var grad = this.context.createLinearGradient(this.position[0], this.position[1], nextPoint[0], nextPoint[1]);
+            grad.addColorStop(0, this._getStrokeColor(this.position[2]));
+            grad.addColorStop(1, this._getStrokeColor(nextPoint[2]));
+
+            //this.context.strokeStyle = this._getStrokeColor(colorValue);
+            this.context.strokeStyle = grad;
+
             this.context.lineWidth = this.options.lineWidth;
             this.context.lineCap = 'round';
             this.context.beginPath();
 
             this.context.moveTo(this.position[0], this.position[1]);
             this.context.quadraticCurveTo(this.controlPoint[0], this.controlPoint[1], midX, midY);
-            this.context.lineTo(nextPoint[0], nextPoint[1]);
             this.context.stroke();
         }
 
-        this.position = [midX, midY];
+        this.position = [midX, midY, midColor];
         this.controlPoint = nextPoint;
     }
 
@@ -71,9 +84,13 @@ export default class PathRenderer {
             let colorValue = nextPoint[2];
 
             this.context.globalCompositeOperation = this.compositeOperation;
-            this.context.strokeStyle = this._getStrokeColor(colorValue);
+            var grad = this.context.createLinearGradient(this.position[0], this.position[1], nextPoint[0], nextPoint[1]);
+            grad.addColorStop(0, this._getStrokeColor(this.position[2]));
+            grad.addColorStop(1, this._getStrokeColor(nextPoint[2]));
+            //this.context.strokeStyle = this._getStrokeColor(colorValue);
+            this.context.strokeStyle = grad;
             this.context.lineWidth = this.options.lineWidth;
-            this.context.lineCap = 'square';
+            this.context.lineCap = 'round';
             this.context.beginPath();
 
             this.context.moveTo(this.position[0], this.position[1]);
