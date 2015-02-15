@@ -1,7 +1,9 @@
 var gulp = require('gulp');
 var inject = require('gulp-inject');
 var to5 = require('gulp-6to5');
-var annotate = require('gulp-ng-annotate');
+var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var rename = require('gulp-rename');
 
 gulp.task('scripts', function () {
     return gulp.src([
@@ -11,7 +13,6 @@ gulp.task('scripts', function () {
         .pipe(to5({
             modules: 'system'
         }))
-        .pipe(annotate())
         .pipe(gulp.dest('./build'));
 });
 
@@ -40,10 +41,27 @@ gulp.task('assets', function() {
 
 gulp.task('watch', ['index', 'assets'], function () {
 
-    gulp.watch('./src/**/*.js', ['scripts']);
+    gulp.watch('./src/**/*.js', ['scripts', 'dist']);
     gulp.watch('./src/index.html', ['index']);
 
 });
 
+/**
+ * Create a stand-alone bundle and minified version for distribution
+ */
+gulp.task('dist', function() {
+    return gulp.src([
+        './src/scripts/!(init)*.js'
+    ])
+        .pipe(concat('chromata.js'))
+        .pipe(to5({
+            modules: 'ignore'
+        }))
+        .pipe(gulp.dest('./dist'))
+        .pipe(uglify())
+        .pipe(rename('chromata.min.js'))
+        .pipe(gulp.dest('./dist'));
+});
 
-gulp.task('default', ['index']);
+
+gulp.task('default', ['index', 'dist']);
