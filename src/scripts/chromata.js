@@ -4,7 +4,7 @@ import PathRenderer from 'scripts/pathRenderer';
 
 export default class Chromata {
 
-    constructor(imageElement, options) {
+    constructor(imageElement, options = {}) {
         var renderCanvas = document.createElement('canvas'),
             renderContext = renderCanvas.getContext('2d'),
             tmpCanvas = document.createElement('canvas'),
@@ -21,7 +21,7 @@ export default class Chromata {
             colorMode: options.colorMode || 'color',
             lineWidth: options.lineWidth || 2,
             lineMode: options.lineMode || 'smooth',
-            compositeOperation: options.compositeOperation || 'default'
+            compositeOperation: options.compositeOperation || 'lighten'
         };
 
         image.src = imageElement.src;
@@ -45,9 +45,6 @@ export default class Chromata {
         this.imageArray = [];
         this.renderContext = renderContext;
         this.image = image;
-
-        this.renderContext.globalCompositeOperation = 'lighten';
-
         loader.then(() => this._run());
     }
 
@@ -64,11 +61,10 @@ export default class Chromata {
                 colorMode: this.options.colorMode,
                 lineWidth: this.options.lineWidth,
                 lineMode: this.options.lineMode,
-                compositeOperation: this.options.compositeOperation,
                 speed: this.options.speed
             };
 
-
+        this.renderContext.globalCompositeOperation = this.options.compositeOperation;
 
         pathFinders.forEach((pathFinder) => {
             renderers.push(new PathRenderer(this.renderContext, pathFinder, renderOptions));

@@ -16,51 +16,36 @@ export default class PathFinder {
         this.velocity = options.startingVelocity;
 
         this.targetColor = typeof targetColor === 'string' ? this._hexToRgb(targetColor) : targetColor;
-
-        // TODO: put in method
-        var i;
-        for (i = 0; i < 2; i++) {
-            if (this.targetColor[i] !== 0) {
-                break;
-            }
-        }
-        this.rgbIndex = i;
-
+        this.rgbIndex = this._getRgbIndex(this.targetColor);
     }
 
     /**
-     * Algorithm for finding the next point by picking the closest match out of an arc-shaped array of possible pixels
-     * arranged pointing in the direction of velocity.
-     * @returns {*}
+     * Get next coordinate point in path.
+     *
+     * @returns {[int, int, int]}
      */
     getNextPoint() {
 
         var result,
             i = 0,
-            limit = 2; // prevent an infinite loop
+            limit = 5; // prevent an infinite loop
 
         do {
-            result = this._getNextPristinePixel();
+            result = this._getNextPixel();
             i++;
-        //} while(false);
         } while(i <= limit && result.isPristine === false);
-
-       /* if (limit <= i) {
-            // could not find a pristine pixel, so choose a random location
-            let x = Math.floor(Math.random() * this.arrayWidth),
-                y = Math.floor(Math.random() * this.arrayHeight);
-
-            let currentPixel = this.pixelArray[y][x];
-            var colorDistance = this._getColorDistance(currentPixel);
-            this.y = y;
-            this.x = x;
-            result.nextPixel = [x, y, MAX - colorDistance]
-        }*/
 
         return result.nextPixel;
     }
 
-    _getNextPristinePixel() {
+    /**
+     * Algorithm for finding the next point by picking the closest match out of an arc-shaped array of possible pixels
+     * arranged pointing in the direction of velocity.
+     *
+     * @returns {{nextPixel: [int, int, int], isPristine: boolean}}
+     * @private
+     */
+    _getNextPixel() {
         var theta = this._getVelocityAngle(),
             isPristine,
             closestColor = 1000000,
@@ -197,5 +182,16 @@ export default class PathFinder {
 
     _updateWorkingArray(row, col) {
         this.workingArray[row][col][this.rgbIndex] = true;
+    }
+
+    _getRgbIndex(targetColorArray) {
+        var i;
+        for (i = 0; i < 2; i++) {
+            if (targetColorArray[i] !== 0) {
+                break;
+            }
+        }
+
+        return i;
     }
 }
