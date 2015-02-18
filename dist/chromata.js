@@ -14,8 +14,7 @@ var Chromata = (function () {
         tmpCanvas = document.createElement("canvas"),
         tmpContext = tmpCanvas.getContext("2d"),
         image = new Image(),
-        parentElement,
-        loader;
+        parentElement;
 
     this.options = {
       pathFinderCount: options.pathFinderCount || 1,
@@ -31,14 +30,14 @@ var Chromata = (function () {
     image.src = imageElement.src;
     parentElement = imageElement.parentNode;
 
-    loader = new Promise(function (resolve) {
+    this.loader = new Promise(function (resolve) {
       image.addEventListener("load", function () {
         tmpCanvas.width = renderCanvas.width = image.width;
         tmpCanvas.height = renderCanvas.height = image.height;
         tmpContext.drawImage(image, 0, 0);
 
-        parentElement.removeChild(imageElement);
-        parentElement.appendChild(renderCanvas);
+        imageElement.style.display = "none";
+        parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
         _this.imageArray = _this._getImageArray(tmpContext);
         _this.workingArray = _this._getWorkingArray(tmpContext);
@@ -49,24 +48,74 @@ var Chromata = (function () {
     this.imageArray = [];
     this.renderContext = renderContext;
     this.image = image;
-    loader.then(function () {
-      return _this._run();
-    });
+    this.isRunning = false;
+    this.iterationCount = 0;
   }
 
   _prototypeProperties(Chromata, null, {
+    start: {
+
+      /**
+       * Start the animation.
+       */
+      value: function start() {
+        var _this2 = this;
+        this.loader.then(function () {
+          _this2.isRunning = true;
+
+          if (typeof _this2._tick === "undefined") {
+            _this2._run();
+          } else {
+            _this2._tick();
+          }
+        });
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    stop: {
+
+      /**
+       * Stop the animation. Returns the current iteration count.
+       * @returns {number}
+       */
+      value: function stop() {
+        this.isRunning = false;
+        return this.iterationCount;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    toggle: {
+
+      /**
+       * Start/stop the animation. If stopping, return the current iteration count.
+       * @returns {*}
+       */
+      value: function toggle() {
+        if (this.isRunning) {
+          return this.stop();
+        } else {
+          return this.start();
+        }
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
     _run: {
 
       /**
-       * Start the animation
+       * Set up the pathfinders and renderers and get the animation going.
        * @private
        */
       value: function Run() {
-        var _this2 = this;
+        var _this3 = this;
 
 
-        var tick,
-            renderers = [],
+        var renderers = [],
             pathFinders = this._initPathFinders(),
             renderOptions = {
           colorMode: this.options.colorMode,
@@ -78,17 +127,21 @@ var Chromata = (function () {
         this.renderContext.globalCompositeOperation = this.options.compositeOperation;
 
         pathFinders.forEach(function (pathFinder) {
-          renderers.push(new PathRenderer(_this2.renderContext, pathFinder, renderOptions));
+          renderers.push(new PathRenderer(_this3.renderContext, pathFinder, renderOptions));
         });
 
-        tick = function () {
+        this._tick = function () {
           renderers.forEach(function (renderer) {
             return renderer.drawNextLine();
           });
-          requestAnimationFrame(tick);
+          _this3.iterationCount++;
+
+          if (_this3.isRunning) {
+            requestAnimationFrame(_this3._tick);
+          }
         };
 
-        requestAnimationFrame(tick);
+        this._tick();
       },
       writable: true,
       enumerable: true,
@@ -132,14 +185,14 @@ var Chromata = (function () {
     },
     _seedTop: {
       value: function SeedTop(count, pathFinders, options) {
-        var _this3 = this;
+        var _this4 = this;
         var width = this.image.width,
             unit = width / count,
             xPosFn = function (i) {
           return unit * i - unit / 2;
         },
             yPosFn = function () {
-          return _this3.options.speed;
+          return _this4.options.speed;
         };
 
         options.startingVelocity = [0, this.options.speed];
@@ -151,7 +204,7 @@ var Chromata = (function () {
     },
     _seedBottom: {
       value: function SeedBottom(count, pathFinders, options) {
-        var _this4 = this;
+        var _this5 = this;
         var width = this.image.width,
             height = this.image.height,
             unit = width / count,
@@ -159,7 +212,7 @@ var Chromata = (function () {
           return unit * i - unit / 2;
         },
             yPosFn = function () {
-          return height - _this4.options.speed;
+          return height - _this5.options.speed;
         };
 
         options.startingVelocity = [0, -this.options.speed];
@@ -171,11 +224,11 @@ var Chromata = (function () {
     },
     _seedLeft: {
       value: function SeedLeft(count, pathFinders, options) {
-        var _this5 = this;
+        var _this6 = this;
         var height = this.image.height,
             unit = height / count,
             xPosFn = function () {
-          return _this5.options.speed;
+          return _this6.options.speed;
         },
             yPosFn = function (i) {
           return unit * i - unit / 2;
@@ -190,12 +243,12 @@ var Chromata = (function () {
     },
     _seedRight: {
       value: function SeedRight(count, pathFinders, options) {
-        var _this6 = this;
+        var _this7 = this;
         var width = this.image.width,
             height = this.image.height,
             unit = height / count,
             xPosFn = function () {
-          return width - _this6.options.speed;
+          return width - _this7.options.speed;
         },
             yPosFn = function (i) {
           return unit * i - unit / 2;

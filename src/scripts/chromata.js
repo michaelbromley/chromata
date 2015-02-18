@@ -10,8 +10,7 @@ export default class Chromata {
             tmpCanvas = document.createElement('canvas'),
             tmpContext = tmpCanvas.getContext('2d'),
             image = new Image(),
-            parentElement,
-            loader;
+            parentElement;
 
         this.options = {
             pathFinderCount: options.pathFinderCount || 1,
@@ -27,14 +26,14 @@ export default class Chromata {
         image.src = imageElement.src;
         parentElement = imageElement.parentNode;
 
-        loader = new Promise(resolve => {
+        this.loader = new Promise(resolve => {
             image.addEventListener('load', () => {
                 tmpCanvas.width = renderCanvas.width = image.width;
                 tmpCanvas.height = renderCanvas.height =  image.height;
                 tmpContext.drawImage(image, 0, 0);
 
-                parentElement.removeChild(imageElement);
-                parentElement.appendChild(renderCanvas);
+                imageElement.style.display = 'none';
+                parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
                 this.imageArray = this._getImageArray(tmpContext);
                 this.workingArray = this._getWorkingArray(tmpContext);
@@ -45,17 +44,54 @@ export default class Chromata {
         this.imageArray = [];
         this.renderContext = renderContext;
         this.image = image;
-        loader.then(() => this._run());
+        this.isRunning = false;
+        this.iterationCount = 0;
     }
 
     /**
-     * Start the animation
+     * Start the animation.
+     */
+    start() {
+        this.loader.then(() => {
+
+            this.isRunning = true;
+
+            if (typeof this._tick === 'undefined') {
+                this._run();
+            } else {
+                this._tick();
+            }
+        });
+    }
+
+    /**
+     * Stop the animation. Returns the current iteration count.
+     * @returns {number}
+     */
+    stop() {
+        this.isRunning = false;
+        return this.iterationCount;
+    }
+
+    /**
+     * Start/stop the animation. If stopping, return the current iteration count.
+     * @returns {*}
+     */
+    toggle() {
+        if (this.isRunning) {
+            return this.stop();
+        } else {
+            return this.start();
+        }
+    }
+
+    /**
+     * Set up the pathfinders and renderers and get the animation going.
      * @private
      */
     _run() {
 
-        var tick,
-            renderers = [],
+        var renderers = [],
             pathFinders = this._initPathFinders(),
             renderOptions = {
                 colorMode: this.options.colorMode,
@@ -70,12 +106,16 @@ export default class Chromata {
             renderers.push(new PathRenderer(this.renderContext, pathFinder, renderOptions));
         });
 
-        tick = () => {
+        this._tick = () => {
             renderers.forEach(renderer => renderer.drawNextLine());
-            requestAnimationFrame(tick);
+            this.iterationCount ++;
+
+            if (this.isRunning) {
+                requestAnimationFrame(this._tick);
+            }
         };
 
-        requestAnimationFrame(tick);
+        this._tick();
     }
 
     /**
