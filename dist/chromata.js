@@ -14,7 +14,8 @@ var Chromata = (function () {
         tmpCanvas = document.createElement("canvas"),
         tmpContext = tmpCanvas.getContext("2d"),
         image = new Image(),
-        parentElement;
+        parentElement,
+        dimensions;
 
     this.options = {
       pathFinderCount: options.pathFinderCount || 1,
@@ -24,7 +25,8 @@ var Chromata = (function () {
       colorMode: options.colorMode || "color",
       lineWidth: options.lineWidth || 2,
       lineMode: options.lineMode || "smooth",
-      compositeOperation: options.compositeOperation || "lighten"
+      compositeOperation: options.compositeOperation || "lighten",
+      outputSize: options.outputSize || "original"
     };
 
     image.src = imageElement.src;
@@ -32,13 +34,16 @@ var Chromata = (function () {
 
     this.loader = new Promise(function (resolve) {
       image.addEventListener("load", function () {
-        tmpCanvas.width = renderCanvas.width = image.width;
-        tmpCanvas.height = renderCanvas.height = image.height;
-        tmpContext.drawImage(image, 0, 0);
+        dimensions = _this._getOutputDimensions(imageElement);
+        tmpCanvas.width = renderCanvas.width = dimensions.width;
+        tmpCanvas.height = renderCanvas.height = dimensions.height;
+        tmpContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
 
         imageElement.style.display = "none";
+        //parentElement.insertBefore(tmpCanvas, imageElement.nextSibling);
         parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
+        _this.dimensions = dimensions;
         _this.imageArray = _this._getImageArray(tmpContext);
         _this.workingArray = _this._getWorkingArray(tmpContext);
         resolve();
@@ -105,6 +110,21 @@ var Chromata = (function () {
       enumerable: true,
       configurable: true
     },
+    reset: {
+
+      /**
+       * Clear the canvas and set the animation back to the start.
+       */
+      value: function reset() {
+        this.isRunning = false;
+        this._tick = undefined;
+        cancelAnimationFrame(this.raf);
+        this.renderContext.clearRect(0, 0, this.dimensions.width, this.dimensions.height);
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
     _run: {
 
       /**
@@ -137,7 +157,7 @@ var Chromata = (function () {
           _this3.iterationCount++;
 
           if (_this3.isRunning) {
-            requestAnimationFrame(_this3._tick);
+            _this3.raf = requestAnimationFrame(_this3._tick);
           }
         };
 
@@ -186,7 +206,7 @@ var Chromata = (function () {
     _seedTop: {
       value: function SeedTop(count, pathFinders, options) {
         var _this4 = this;
-        var width = this.image.width,
+        var width = this.dimensions.width,
             unit = width / count,
             xPosFn = function (i) {
           return unit * i - unit / 2;
@@ -205,8 +225,8 @@ var Chromata = (function () {
     _seedBottom: {
       value: function SeedBottom(count, pathFinders, options) {
         var _this5 = this;
-        var width = this.image.width,
-            height = this.image.height,
+        var width = this.dimensions.width,
+            height = this.dimensions.height,
             unit = width / count,
             xPosFn = function (i) {
           return unit * i - unit / 2;
@@ -225,7 +245,7 @@ var Chromata = (function () {
     _seedLeft: {
       value: function SeedLeft(count, pathFinders, options) {
         var _this6 = this;
-        var height = this.image.height,
+        var height = this.dimensions.height,
             unit = height / count,
             xPosFn = function () {
           return _this6.options.speed;
@@ -244,8 +264,8 @@ var Chromata = (function () {
     _seedRight: {
       value: function SeedRight(count, pathFinders, options) {
         var _this7 = this;
-        var width = this.image.width,
-            height = this.image.height,
+        var width = this.dimensions.width,
+            height = this.dimensions.height,
             unit = height / count,
             xPosFn = function () {
           return width - _this7.options.speed;
@@ -349,6 +369,36 @@ var Chromata = (function () {
         }
 
         return workingArray;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    _getOutputDimensions: {
+      value: function GetOutputDimensions(image) {
+        var width, height;
+
+        if (this.options.outputSize === "original") {
+          width = image.width;
+          height = image.height;
+        } else {
+          var container = image.parentNode,
+              ratioW = container.clientWidth / image.width,
+              ratioH = container.clientHeight / image.height,
+              smallerRatio = ratioH <= ratioW ? ratioH : ratioW;
+
+          width = image.width * smallerRatio;
+          height = image.height * smallerRatio;
+
+          if (1 < Math.round(smallerRatio)) {
+            this.options.lineWidth *= smallerRatio;
+          }
+        }
+
+        return {
+          width: width,
+          height: height
+        };
       },
       writable: true,
       enumerable: true,

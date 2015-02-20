@@ -27,7 +27,7 @@ gulp.task('index', ['scripts'], function() {
     ], {read: false, cwd: './src/'});
 
     return target
-        .pipe(inject(sources, { addRootSlash: false }))
+       // .pipe(inject(sources, { addRootSlash: false }))
         .pipe(gulp.dest('./build'));
 });
 

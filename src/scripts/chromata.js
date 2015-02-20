@@ -10,7 +10,8 @@ export default class Chromata {
             tmpCanvas = document.createElement('canvas'),
             tmpContext = tmpCanvas.getContext('2d'),
             image = new Image(),
-            parentElement;
+            parentElement,
+            dimensions;
 
         this.options = {
             pathFinderCount: options.pathFinderCount || 1,
@@ -20,7 +21,8 @@ export default class Chromata {
             colorMode: options.colorMode || 'color',
             lineWidth: options.lineWidth || 2,
             lineMode: options.lineMode || 'smooth',
-            compositeOperation: options.compositeOperation || 'lighten'
+            compositeOperation: options.compositeOperation || 'lighten',
+            outputSize: options.outputSize || 'original'
         };
 
         image.src = imageElement.src;
@@ -28,13 +30,16 @@ export default class Chromata {
 
         this.loader = new Promise(resolve => {
             image.addEventListener('load', () => {
-                tmpCanvas.width = renderCanvas.width = image.width;
-                tmpCanvas.height = renderCanvas.height =  image.height;
-                tmpContext.drawImage(image, 0, 0);
+                dimensions = this._getOutputDimensions(imageElement);
+                tmpCanvas.width = renderCanvas.width = dimensions.width;
+                tmpCanvas.height = renderCanvas.height =  dimensions.height;
+                tmpContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
 
                 imageElement.style.display = 'none';
+                //parentElement.insertBefore(tmpCanvas, imageElement.nextSibling);
                 parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
+                this.dimensions = dimensions;
                 this.imageArray = this._getImageArray(tmpContext);
                 this.workingArray = this._getWorkingArray(tmpContext);
                 resolve();
@@ -86,6 +91,16 @@ export default class Chromata {
     }
 
     /**
+     * Clear the canvas and set the animation back to the start.
+     */
+    reset() {
+        this.isRunning = false;
+        this._tick = undefined;
+        cancelAnimationFrame(this.raf);
+        this.renderContext.clearRect(0, 0, this.dimensions.width, this.dimensions.height);
+    }
+
+    /**
      * Set up the pathfinders and renderers and get the animation going.
      * @private
      */
@@ -111,7 +126,7 @@ export default class Chromata {
             this.iterationCount ++;
 
             if (this.isRunning) {
-                requestAnimationFrame(this._tick);
+                this.raf = requestAnimationFrame(this._tick);
             }
         };
 
@@ -150,7 +165,7 @@ export default class Chromata {
     }
 
     _seedTop(count, pathFinders, options) {
-        var width = this.image.width,
+        var width = this.dimensions.width,
             unit = width / count,
             xPosFn = i => unit * i - unit / 2,
             yPosFn = () => this.options.speed;
@@ -160,8 +175,8 @@ export default class Chromata {
     }
 
     _seedBottom(count, pathFinders, options) {
-        var width = this.image.width,
-            height = this.image.height,
+        var width = this.dimensions.width,
+            height = this.dimensions.height,
             unit = width / count,
             xPosFn = i => unit * i - unit / 2,
             yPosFn = () => height - this.options.speed;
@@ -171,7 +186,7 @@ export default class Chromata {
     }
 
     _seedLeft(count, pathFinders, options) {
-        var height = this.image.height,
+        var height = this.dimensions.height,
             unit = height / count,
             xPosFn = () => this.options.speed,
             yPosFn = i => unit * i - unit / 2;
@@ -181,8 +196,8 @@ export default class Chromata {
     }
 
     _seedRight(count, pathFinders, options) {
-        var width = this.image.width,
-            height = this.image.height,
+        var width = this.dimensions.width,
+            height = this.dimensions.height,
             unit = height / count,
             xPosFn = () => width - this.options.speed,
             yPosFn = i => unit * i - unit / 2;
@@ -266,5 +281,33 @@ export default class Chromata {
         }
 
         return workingArray;
+    }
+
+    _getOutputDimensions(image) {
+
+        var width,
+            height;
+
+        if (this.options.outputSize === 'original') {
+            width = image.width;
+            height = image.height;
+        } else {
+            let container = image.parentNode,
+                ratioW = container.clientWidth / image.width,
+                ratioH = container.clientHeight / image.height,
+                smallerRatio = (ratioH <= ratioW) ? ratioH : ratioW;
+
+            width = image.width * smallerRatio;
+            height = image.height * smallerRatio;
+
+            if (1 < Math.round(smallerRatio)) {
+                this.options.lineWidth *= smallerRatio;
+            }
+        }
+
+        return {
+            width: width,
+            height: height
+        };
     }
 }

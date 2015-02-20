@@ -13,13 +13,18 @@ chromata = new Chromata(image, {
     lineWidth: 1,
     lineMode: 'square',
     //compositeOperation: 'default',
-    origin: 'bottom left right'
+    origin: 'bottom left right',
+    outputSize: 'original' // original, container
 });
 
 
 document.querySelector('#toggle').addEventListener('click', e => {
     var count = chromata.toggle();
     console.log('iterations: ' + count);
+});
+
+document.querySelector('#reset').addEventListener('click', e => {
+    chromata.reset();
 });
 
 
