@@ -6,15 +6,15 @@ var image = document.querySelector('#image'),
     chromata;
 
 chromata = new Chromata(image, {
-    pathFinderCount: 300,
-    speed: 6,
-    turningAngle: Math.PI/1,
+    pathFinderCount: 30,
+    speed: 5,
+    turningAngle: Math.PI/10,
     colorMode: 'color',
-    lineWidth: 1,
-    lineMode: 'square',
+    lineWidth: 5,
+    lineMode: 'smooth',
     //compositeOperation: 'default',
-    origin: 'bottom left right',
-    outputSize: 'original' // original, container
+    origin: ['50% 30%', 'bottom', 'top'],
+    outputSize: 'container' // original, container
 });
 
 

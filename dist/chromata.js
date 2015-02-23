@@ -11,15 +11,15 @@ var Chromata = (function () {
     var options = arguments[1] === undefined ? {} : arguments[1];
     var renderCanvas = document.createElement("canvas"),
         renderContext = renderCanvas.getContext("2d"),
-        tmpCanvas = document.createElement("canvas"),
-        tmpContext = tmpCanvas.getContext("2d"),
+        sourceCanvas = document.createElement("canvas"),
+        sourceContext = sourceCanvas.getContext("2d"),
         image = new Image(),
         parentElement,
         dimensions;
 
     this.options = {
       pathFinderCount: options.pathFinderCount || 1,
-      origin: options.origin || "bottom",
+      origin: options.origin || ["bottom"],
       speed: options.speed || 3,
       turningAngle: options.turningAngle || Math.PI,
       colorMode: options.colorMode || "color",
@@ -35,22 +35,23 @@ var Chromata = (function () {
     this.loader = new Promise(function (resolve) {
       image.addEventListener("load", function () {
         dimensions = _this._getOutputDimensions(imageElement);
-        tmpCanvas.width = renderCanvas.width = dimensions.width;
-        tmpCanvas.height = renderCanvas.height = dimensions.height;
-        tmpContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+        sourceCanvas.width = renderCanvas.width = dimensions.width;
+        sourceCanvas.height = renderCanvas.height = dimensions.height;
+        sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
 
         imageElement.style.display = "none";
         //parentElement.insertBefore(tmpCanvas, imageElement.nextSibling);
         parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
         _this.dimensions = dimensions;
-        _this.imageArray = _this._getImageArray(tmpContext);
-        _this.workingArray = _this._getWorkingArray(tmpContext);
+        _this.imageArray = _this._getImageArray(sourceContext);
+        _this.workingArray = _this._getWorkingArray(sourceContext);
         resolve();
       });
     });
 
     this.imageArray = [];
+    this.sourceContext = sourceContext;
     this.renderContext = renderContext;
     this.image = image;
     this.isRunning = false;
@@ -120,6 +121,7 @@ var Chromata = (function () {
         this._tick = undefined;
         cancelAnimationFrame(this.raf);
         this.renderContext.clearRect(0, 0, this.dimensions.width, this.dimensions.height);
+        this.workingArray = this._getWorkingArray(this.sourceContext);
       },
       writable: true,
       enumerable: true,
@@ -175,9 +177,10 @@ var Chromata = (function () {
        * @private
        */
       value: function InitPathFinders() {
+        var _this4 = this;
         var pathFinders = [],
             count = this.options.pathFinderCount,
-            origins = this.options.origin.split(" "),
+            origins = this.options.origin,
             pathFindersPerOrigin = count / origins.length,
             options = {
           speed: this.options.speed,
@@ -197,6 +200,13 @@ var Chromata = (function () {
           this._seedRight(pathFindersPerOrigin, pathFinders, options);
         }
 
+        origins.forEach(function (origin) {
+          var matches = origin.match(/(\d{1,3})% (\d{1,3})%/);
+          if (matches) {
+            _this4._seedPoint(pathFindersPerOrigin, pathFinders, options, matches[1], matches[2]);
+          }
+        });
+
         return pathFinders;
       },
       writable: true,
@@ -205,14 +215,14 @@ var Chromata = (function () {
     },
     _seedTop: {
       value: function SeedTop(count, pathFinders, options) {
-        var _this4 = this;
+        var _this5 = this;
         var width = this.dimensions.width,
             unit = width / count,
             xPosFn = function (i) {
           return unit * i - unit / 2;
         },
             yPosFn = function () {
-          return _this4.options.speed;
+          return _this5.options.speed;
         };
 
         options.startingVelocity = [0, this.options.speed];
@@ -224,7 +234,7 @@ var Chromata = (function () {
     },
     _seedBottom: {
       value: function SeedBottom(count, pathFinders, options) {
-        var _this5 = this;
+        var _this6 = this;
         var width = this.dimensions.width,
             height = this.dimensions.height,
             unit = width / count,
@@ -232,7 +242,7 @@ var Chromata = (function () {
           return unit * i - unit / 2;
         },
             yPosFn = function () {
-          return height - _this5.options.speed;
+          return height - _this6.options.speed;
         };
 
         options.startingVelocity = [0, -this.options.speed];
@@ -244,11 +254,11 @@ var Chromata = (function () {
     },
     _seedLeft: {
       value: function SeedLeft(count, pathFinders, options) {
-        var _this6 = this;
+        var _this7 = this;
         var height = this.dimensions.height,
             unit = height / count,
             xPosFn = function () {
-          return _this6.options.speed;
+          return _this7.options.speed;
         },
             yPosFn = function (i) {
           return unit * i - unit / 2;
@@ -263,12 +273,12 @@ var Chromata = (function () {
     },
     _seedRight: {
       value: function SeedRight(count, pathFinders, options) {
-        var _this7 = this;
+        var _this8 = this;
         var width = this.dimensions.width,
             height = this.dimensions.height,
             unit = height / count,
             xPosFn = function () {
-          return width - _this7.options.speed;
+          return width - _this8.options.speed;
         },
             yPosFn = function (i) {
           return unit * i - unit / 2;
@@ -276,6 +286,37 @@ var Chromata = (function () {
 
         options.startingVelocity = [-this.options.speed, 0];
         this._seedCreateLoop(count, pathFinders, xPosFn, yPosFn, options);
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    _seedPoint: {
+      value: function SeedPoint(count, pathFinders, options, xPc, yPc) {
+        var xPos = Math.floor(this.dimensions.width * xPc / 100),
+            yPos = Math.floor(this.dimensions.width * yPc / 100);
+
+        for (var i = 1; i < count + 1; i++) {
+          var color = this._indexToRgbString(i),
+              direction = i % 4;
+
+          switch (direction) {
+            case 0:
+              options.startingVelocity = [-this.options.speed, 0];
+              break;
+            case 1:
+              options.startingVelocity = [0, this.options.speed];
+              break;
+            case 2:
+              options.startingVelocity = [this.options.speed, 0];
+              break;
+            case 3:
+              options.startingVelocity = [0, -this.options.speed];
+              break;
+          }
+
+          pathFinders.push(new PathFinder(this.imageArray, this.workingArray, color, xPos, yPos, options));
+        }
       },
       writable: true,
       enumerable: true,
@@ -389,10 +430,6 @@ var Chromata = (function () {
 
           width = image.width * smallerRatio;
           height = image.height * smallerRatio;
-
-          if (1 < Math.round(smallerRatio)) {
-            this.options.lineWidth *= smallerRatio;
-          }
         }
 
         return {
