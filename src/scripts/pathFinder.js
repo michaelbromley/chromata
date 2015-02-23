@@ -17,6 +17,16 @@ export default class PathFinder {
 
         this.targetColor = typeof targetColor === 'string' ? this._hexToRgb(targetColor) : targetColor;
         this.rgbIndex = this._getRgbIndex(this.targetColor);
+
+        if (this.options.key === 'low') {
+            this.comparatorFn = (distance, closest) => {
+                return 0 < distance && distance < closest;
+            };
+        } else {
+            this.comparatorFn = (distance, closest) => {
+                return  closest < distance && distance < MAX;
+            };
+        }
     }
 
     /**
@@ -48,7 +58,7 @@ export default class PathFinder {
     _getNextPixel() {
         var theta = this._getVelocityAngle(),
             isPristine,
-            closestColor = 1000000,
+            closestColor = this.options.key === 'low' ? 100000 : 0,
             nextPixel,
             defaultNextPixel,
             arcSize = this.options.turningAngle,
@@ -68,7 +78,7 @@ export default class PathFinder {
 
                 colorDistance = this._getColorDistance(currentPixel);
 
-                if (0 < colorDistance && colorDistance < closestColor  && !visited && alpha === MAX) {
+                if (this.comparatorFn(colorDistance, closestColor) && !visited && alpha === MAX) {
                     nextPixel = [x, y, MAX - colorDistance];
                     closestColor = colorDistance;
                 }

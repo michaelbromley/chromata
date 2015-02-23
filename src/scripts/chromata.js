@@ -19,6 +19,7 @@ export default class Chromata {
             speed: options.speed || 3,
             turningAngle: options.turningAngle || Math.PI,
             colorMode: options.colorMode || 'color',
+            key: options.key || 'low',
             lineWidth: options.lineWidth || 2,
             lineMode: options.lineMode || 'smooth',
             compositeOperation: options.compositeOperation || 'lighten',
@@ -147,7 +148,8 @@ export default class Chromata {
             pathFindersPerOrigin = count / origins.length,
             options = {
                 speed: this.options.speed,
-                turningAngle: this.options.turningAngle
+                turningAngle: this.options.turningAngle,
+                key: this.options.key
             };
 
         if (-1 < origins.indexOf('bottom')) {

@@ -23,6 +23,7 @@ var Chromata = (function () {
       speed: options.speed || 3,
       turningAngle: options.turningAngle || Math.PI,
       colorMode: options.colorMode || "color",
+      key: options.key || "low",
       lineWidth: options.lineWidth || 2,
       lineMode: options.lineMode || "smooth",
       compositeOperation: options.compositeOperation || "lighten",
@@ -184,7 +185,8 @@ var Chromata = (function () {
             pathFindersPerOrigin = count / origins.length,
             options = {
           speed: this.options.speed,
-          turningAngle: this.options.turningAngle
+          turningAngle: this.options.turningAngle,
+          key: this.options.key
         };
 
         if (-1 < origins.indexOf("bottom")) {
@@ -465,6 +467,16 @@ var PathFinder = (function () {
 
     this.targetColor = typeof targetColor === "string" ? this._hexToRgb(targetColor) : targetColor;
     this.rgbIndex = this._getRgbIndex(this.targetColor);
+
+    if (this.options.key === "low") {
+      this.comparatorFn = function (distance, closest) {
+        return 0 < distance && distance < closest;
+      };
+    } else {
+      this.comparatorFn = function (distance, closest) {
+        return closest < distance && distance < MAX;
+      };
+    }
   }
 
   _prototypeProperties(PathFinder, null, {
@@ -503,7 +515,7 @@ var PathFinder = (function () {
       value: function GetNextPixel() {
         var theta = this._getVelocityAngle(),
             isPristine,
-            closestColor = 1000000,
+            closestColor = this.options.key === "low" ? 100000 : 0,
             nextPixel,
             defaultNextPixel,
             arcSize = this.options.turningAngle,
@@ -522,7 +534,7 @@ var PathFinder = (function () {
 
             colorDistance = this._getColorDistance(currentPixel);
 
-            if (0 < colorDistance && colorDistance < closestColor && !visited && alpha === MAX) {
+            if (this.comparatorFn(colorDistance, closestColor) && !visited && alpha === MAX) {
               nextPixel = [x, y, MAX - colorDistance];
               closestColor = colorDistance;
             }
