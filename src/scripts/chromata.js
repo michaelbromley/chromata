@@ -10,7 +10,6 @@ export default class Chromata {
             sourceCanvas = document.createElement('canvas'),
             sourceContext = sourceCanvas.getContext('2d'),
             image = new Image(),
-            parentElement,
             dimensions;
 
         this.options = {
@@ -27,7 +26,6 @@ export default class Chromata {
         };
 
         image.src = imageElement.src;
-        parentElement = imageElement.parentNode;
 
         this.loader = new Promise(resolve => {
             image.addEventListener('load', () => {
@@ -35,10 +33,6 @@ export default class Chromata {
                 sourceCanvas.width = renderCanvas.width = dimensions.width;
                 sourceCanvas.height = renderCanvas.height =  dimensions.height;
                 sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
-
-                imageElement.style.display = 'none';
-                //parentElement.insertBefore(tmpCanvas, imageElement.nextSibling);
-                parentElement.insertBefore(renderCanvas, imageElement.nextSibling);
 
                 this.dimensions = dimensions;
                 this.imageArray = this._getImageArray(sourceContext);
@@ -48,9 +42,9 @@ export default class Chromata {
         });
 
         this.imageArray = [];
+        this.sourceImageElement = imageElement;
         this.sourceContext = sourceContext;
         this.renderContext = renderContext;
-        this.image = image;
         this.isRunning = false;
         this.iterationCount = 0;
     }
@@ -99,8 +93,29 @@ export default class Chromata {
         this.isRunning = false;
         this._tick = undefined;
         cancelAnimationFrame(this.raf);
-        this.renderContext.clearRect(0, 0, this.dimensions.width, this.dimensions.height)
+        this.renderContext.clearRect(0, 0, this.dimensions.width, this.dimensions.height);
         this.workingArray = this._getWorkingArray(this.sourceContext);
+        this._removeRenderCanvas();
+    }
+
+    /**
+     * Hide the source image element and append the render canvas directly after it in the DOM.
+     * @private
+     */
+    _appendRenderCanvas() {
+        var parentElement = this.sourceImageElement.parentNode;
+
+        this.sourceImageElement.style.display = 'none';
+        parentElement.insertBefore(this.renderContext.canvas, this.sourceImageElement.nextSibling);
+    }
+
+    /**
+     * Unhide the source image and remove the render canvas from the DOM.
+     * @private
+     */
+    _removeRenderCanvas() {
+        this.sourceImageElement.style.display = '';
+        this.renderContext.canvas.parentNode.removeChild(this.renderContext.canvas);
     }
 
     /**
@@ -117,6 +132,8 @@ export default class Chromata {
                 lineMode: this.options.lineMode,
                 speed: this.options.speed
             };
+
+        this._appendRenderCanvas();
 
         this.renderContext.globalCompositeOperation = this.options.compositeOperation;
 

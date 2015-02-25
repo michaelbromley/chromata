@@ -10,9 +10,14 @@
 <script src="chromata.min.js" type="text/javascript"></script>
 <script type="text/javascript">
     var image = document.querySelector('img');
-    new Chromata(image, {
-        pathFinderCount: 30
+    chromata = new Chromata(image, {
+        pathFinderCount: 30,
+        speed: 5
     });
+
+    image.addEventListener('click', function() {
+        chromata.toggle();
+    })
 </script>
 </body>
 </html>
