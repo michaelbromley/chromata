@@ -336,7 +336,7 @@ var Chromata = (function () {
     _seedPoint: {
       value: function SeedPoint(count, pathFinders, options, xPc, yPc) {
         var xPos = Math.floor(this.dimensions.width * xPc / 100),
-            yPos = Math.floor(this.dimensions.width * yPc / 100);
+            yPos = Math.floor(this.dimensions.height * yPc / 100);
 
         for (var i = 1; i < count + 1; i++) {
           var color = Utils._indexToRgbString(i),

@@ -248,7 +248,7 @@ export default class Chromata {
 
     _seedPoint(count, pathFinders, options, xPc, yPc) {
         var xPos = Math.floor(this.dimensions.width * xPc / 100),
-            yPos = Math.floor(this.dimensions.width * yPc / 100);
+            yPos = Math.floor(this.dimensions.height * yPc / 100);
 
         for (let i = 1; i < count + 1; i++) {
             let color = Utils._indexToRgbString(i),
