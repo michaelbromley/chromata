@@ -22,7 +22,8 @@ export default class Chromata {
             lineWidth: options.lineWidth || 2,
             lineMode: options.lineMode || 'smooth',
             compositeOperation: options.compositeOperation || 'lighten',
-            outputSize: options.outputSize || 'original'
+            outputSize: options.outputSize || 'original',
+            backgroundColor: options.backgroundColor || 'rgba(255, 255, 255, 0)'
         };
 
         var ready = false;
@@ -33,6 +34,9 @@ export default class Chromata {
             sourceCanvas.width = renderCanvas.width = dimensions.width;
             sourceCanvas.height = renderCanvas.height =  dimensions.height;
             sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+
+            renderContext.fillStyle = this.options.backgroundColor;
+            renderContext.fillRect(0, 0, dimensions.width, dimensions.height);
 
             this.dimensions = dimensions;
             this.imageArray = this._getImageArray(sourceContext);

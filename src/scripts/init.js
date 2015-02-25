@@ -15,7 +15,8 @@ chromata = new Chromata(image, {
     //compositeOperation: 'default',
     origin: ['bottom'],
     outputSize: 'container', // original, container
-    key: 'low'
+    key: 'low',
+    backgroundColor: 'hsla(34, 70%, 70%, 0.6)'
 });
 chromata.start();
 

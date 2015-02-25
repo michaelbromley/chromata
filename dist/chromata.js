@@ -26,7 +26,8 @@ var Chromata = (function () {
       lineWidth: options.lineWidth || 2,
       lineMode: options.lineMode || "smooth",
       compositeOperation: options.compositeOperation || "lighten",
-      outputSize: options.outputSize || "original"
+      outputSize: options.outputSize || "original",
+      backgroundColor: options.backgroundColor || "rgba(255, 255, 255, 0)"
     };
 
     var ready = false;
@@ -37,6 +38,9 @@ var Chromata = (function () {
       sourceCanvas.width = renderCanvas.width = dimensions.width;
       sourceCanvas.height = renderCanvas.height = dimensions.height;
       sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+
+      renderContext.fillStyle = _this.options.backgroundColor;
+      renderContext.fillRect(0, 0, dimensions.width, dimensions.height);
 
       _this.dimensions = dimensions;
       _this.imageArray = _this._getImageArray(sourceContext);
