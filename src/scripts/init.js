@@ -17,6 +17,7 @@ chromata = new Chromata(image, {
     outputSize: 'container', // original, container
     key: 'low'
 });
+chromata.start();
 
 
 document.querySelector('#toggle').addEventListener('click', e => {

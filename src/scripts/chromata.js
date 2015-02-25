@@ -25,21 +25,29 @@ export default class Chromata {
             outputSize: options.outputSize || 'original'
         };
 
+        var ready = false;
+
         image.src = imageElement.src;
+        image.addEventListener('load', () => {
+            dimensions = this._getOutputDimensions(imageElement);
+            sourceCanvas.width = renderCanvas.width = dimensions.width;
+            sourceCanvas.height = renderCanvas.height =  dimensions.height;
+            sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
 
-        this.loader = new Promise(resolve => {
-            image.addEventListener('load', () => {
-                dimensions = this._getOutputDimensions(imageElement);
-                sourceCanvas.width = renderCanvas.width = dimensions.width;
-                sourceCanvas.height = renderCanvas.height =  dimensions.height;
-                sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+            this.dimensions = dimensions;
+            this.imageArray = this._getImageArray(sourceContext);
+            this.workingArray = this._getWorkingArray(sourceContext);
 
-                this.dimensions = dimensions;
-                this.imageArray = this._getImageArray(sourceContext);
-                this.workingArray = this._getWorkingArray(sourceContext);
-                resolve();
-            });
+            ready = true;
         });
+
+        this.loader = callback => {
+            if (!ready) {
+                setTimeout(() => this.loader(callback), 50);
+            } else {
+                callback();
+            }
+        };
 
         this.imageArray = [];
         this.sourceImageElement = imageElement;
@@ -53,7 +61,7 @@ export default class Chromata {
      * Start the animation.
      */
     start() {
-        this.loader.then(() => {
+        this.loader(() => {
 
             this.isRunning = true;
 

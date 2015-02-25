@@ -29,21 +29,31 @@ var Chromata = (function () {
       outputSize: options.outputSize || "original"
     };
 
+    var ready = false;
+
     image.src = imageElement.src;
+    image.addEventListener("load", function () {
+      dimensions = _this._getOutputDimensions(imageElement);
+      sourceCanvas.width = renderCanvas.width = dimensions.width;
+      sourceCanvas.height = renderCanvas.height = dimensions.height;
+      sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
 
-    this.loader = new Promise(function (resolve) {
-      image.addEventListener("load", function () {
-        dimensions = _this._getOutputDimensions(imageElement);
-        sourceCanvas.width = renderCanvas.width = dimensions.width;
-        sourceCanvas.height = renderCanvas.height = dimensions.height;
-        sourceContext.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+      _this.dimensions = dimensions;
+      _this.imageArray = _this._getImageArray(sourceContext);
+      _this.workingArray = _this._getWorkingArray(sourceContext);
 
-        _this.dimensions = dimensions;
-        _this.imageArray = _this._getImageArray(sourceContext);
-        _this.workingArray = _this._getWorkingArray(sourceContext);
-        resolve();
-      });
+      ready = true;
     });
+
+    this.loader = function (callback) {
+      if (!ready) {
+        setTimeout(function () {
+          return _this.loader(callback);
+        }, 50);
+      } else {
+        callback();
+      }
+    };
 
     this.imageArray = [];
     this.sourceImageElement = imageElement;
@@ -61,7 +71,7 @@ var Chromata = (function () {
        */
       value: function start() {
         var _this2 = this;
-        this.loader.then(function () {
+        this.loader(function () {
           _this2.isRunning = true;
 
           if (typeof _this2._tick === "undefined") {
