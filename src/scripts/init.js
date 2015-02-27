@@ -13,7 +13,7 @@ chromata = new Chromata(image, {
     lineWidth: 4,
     lineMode: 'square',
     //compositeOperation: 'default',
-    origin: ['bottom'],
+    origin: ['top'],
     outputSize: 'container', // original, container
     key: 'low',
     backgroundColor: 'hsla(34, 70%, 70%, 0.6)',

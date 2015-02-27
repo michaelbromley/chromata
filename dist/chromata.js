@@ -535,11 +535,13 @@ var PathFinder = (function () {
         isPristine = typeof nextPixel !== "undefined";
         nextPixel = nextPixel || defaultNextPixel;
 
-        this.velocity = [nextPixel[0] - this.x, nextPixel[1] - this.y];
-        this.y = nextPixel[1];
-        this.x = nextPixel[0];
-        this._updateWorkingArray(nextPixel[1], nextPixel[0]);
-        this.pathQueue.put(nextPixel);
+        if (nextPixel) {
+          this.velocity = [nextPixel[0] - this.x, nextPixel[1] - this.y];
+          this.y = nextPixel[1];
+          this.x = nextPixel[0];
+          this._updateWorkingArray(nextPixel[1], nextPixel[0]);
+          this.pathQueue.put(nextPixel);
+        }
 
         return {
           nextPixel: nextPixel,
@@ -773,37 +775,39 @@ var PathRenderer = (function () {
       value: function DrawLineSmooth() {
         var midX, midY, midColor, lineLength, nextPoint = this.pathFinder.getNextPoint(this.context);
 
-        if (typeof this.currentPoint === "undefined") {
-          this.currentPoint = nextPoint;
-        }
-        if (typeof this.controlPoint === "undefined") {
+        if (nextPoint) {
+          if (typeof this.currentPoint === "undefined") {
+            this.currentPoint = nextPoint;
+          }
+          if (typeof this.controlPoint === "undefined") {
+            this.controlPoint = nextPoint;
+          }
+
+          midX = Math.round((this.controlPoint[0] + nextPoint[0]) / 2);
+          midY = Math.round((this.controlPoint[1] + nextPoint[1]) / 2);
+          midColor = Math.floor((this.currentPoint[2] + nextPoint[2]) / 2);
+          lineLength = this._getLineLength(this.currentPoint, nextPoint);
+
+          if (lineLength <= this.options.speed * 3) {
+            var grad = undefined,
+                startColorValue = this.currentPoint[2],
+                endColorValue = nextPoint[2];
+
+            grad = this._createGradient(this.currentPoint, nextPoint, startColorValue, endColorValue);
+            this.context.strokeStyle = grad;
+
+            this.context.lineWidth = this.options.lineWidth;
+            this.context.lineCap = "round";
+            this.context.beginPath();
+
+            this.context.moveTo(this.currentPoint[0], this.currentPoint[1]);
+            this.context.quadraticCurveTo(this.controlPoint[0], this.controlPoint[1], midX, midY);
+            this.context.stroke();
+          }
+
+          this.currentPoint = [midX, midY, midColor];
           this.controlPoint = nextPoint;
         }
-
-        midX = Math.round((this.controlPoint[0] + nextPoint[0]) / 2);
-        midY = Math.round((this.controlPoint[1] + nextPoint[1]) / 2);
-        midColor = Math.floor((this.currentPoint[2] + nextPoint[2]) / 2);
-        lineLength = this._getLineLength(this.currentPoint, nextPoint);
-
-        if (lineLength <= this.options.speed * 3) {
-          var grad = undefined,
-              startColorValue = this.currentPoint[2],
-              endColorValue = nextPoint[2];
-
-          grad = this._createGradient(this.currentPoint, nextPoint, startColorValue, endColorValue);
-          this.context.strokeStyle = grad;
-
-          this.context.lineWidth = this.options.lineWidth;
-          this.context.lineCap = "round";
-          this.context.beginPath();
-
-          this.context.moveTo(this.currentPoint[0], this.currentPoint[1]);
-          this.context.quadraticCurveTo(this.controlPoint[0], this.controlPoint[1], midX, midY);
-          this.context.stroke();
-        }
-
-        this.currentPoint = [midX, midY, midColor];
-        this.controlPoint = nextPoint;
       },
       writable: true,
       enumerable: true,
@@ -813,29 +817,31 @@ var PathRenderer = (function () {
       value: function DrawLineSquare() {
         var lineLength, nextPoint = this.pathFinder.getNextPoint(this.context);
 
-        if (typeof this.currentPoint === "undefined") {
+        if (nextPoint) {
+          if (typeof this.currentPoint === "undefined") {
+            this.currentPoint = nextPoint;
+          }
+
+          lineLength = this._getLineLength(this.currentPoint, nextPoint);
+
+          if (lineLength <= this.options.speed + 1) {
+            var grad = undefined,
+                startColorValue = this.currentPoint[2],
+                endColorValue = nextPoint[2];
+
+            grad = this._createGradient(this.currentPoint, nextPoint, startColorValue, endColorValue);
+
+            this.context.strokeStyle = grad;
+            this.context.lineWidth = this.options.lineWidth;
+            this.context.lineCap = "round";
+            this.context.beginPath();
+
+            this.context.moveTo(this.currentPoint[0], this.currentPoint[1]);
+            this.context.lineTo(nextPoint[0], nextPoint[1]);
+            this.context.stroke();
+          }
           this.currentPoint = nextPoint;
         }
-
-        lineLength = this._getLineLength(this.currentPoint, nextPoint);
-
-        if (lineLength <= this.options.speed + 1) {
-          var grad = undefined,
-              startColorValue = this.currentPoint[2],
-              endColorValue = nextPoint[2];
-
-          grad = this._createGradient(this.currentPoint, nextPoint, startColorValue, endColorValue);
-
-          this.context.strokeStyle = grad;
-          this.context.lineWidth = this.options.lineWidth;
-          this.context.lineCap = "round";
-          this.context.beginPath();
-
-          this.context.moveTo(this.currentPoint[0], this.currentPoint[1]);
-          this.context.lineTo(nextPoint[0], nextPoint[1]);
-          this.context.stroke();
-        }
-        this.currentPoint = nextPoint;
       },
       writable: true,
       enumerable: true,

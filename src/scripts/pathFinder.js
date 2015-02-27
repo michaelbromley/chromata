@@ -96,11 +96,13 @@ export default class PathFinder {
         isPristine = typeof nextPixel !== 'undefined';
         nextPixel = nextPixel || defaultNextPixel;
 
-        this.velocity = [nextPixel[0] - this.x, nextPixel[1] - this.y];
-        this.y = nextPixel[1];
-        this.x = nextPixel[0];
-        this._updateWorkingArray(nextPixel[1], nextPixel[0]);
-        this.pathQueue.put(nextPixel);
+        if (nextPixel) {
+            this.velocity = [nextPixel[0] - this.x, nextPixel[1] - this.y];
+            this.y = nextPixel[1];
+            this.x = nextPixel[0];
+            this._updateWorkingArray(nextPixel[1], nextPixel[0]);
+            this.pathQueue.put(nextPixel);
+        }
 
         return {
             nextPixel: nextPixel,
