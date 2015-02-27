@@ -14,23 +14,10 @@ var Chromata = (function () {
         sourceCanvas = document.createElement("canvas"),
         sourceContext = sourceCanvas.getContext("2d"),
         image = new Image(),
-        dimensions;
+        dimensions,
+        ready = false;
 
-    this.options = {
-      pathFinderCount: options.pathFinderCount || 1,
-      origin: options.origin || ["bottom"],
-      speed: options.speed || 3,
-      turningAngle: options.turningAngle || Math.PI,
-      colorMode: options.colorMode || "color",
-      key: options.key || "low",
-      lineWidth: options.lineWidth || 2,
-      lineMode: options.lineMode || "smooth",
-      compositeOperation: options.compositeOperation || "lighten",
-      outputSize: options.outputSize || "original",
-      backgroundColor: options.backgroundColor || "rgba(255, 255, 255, 0)"
-    };
-
-    var ready = false;
+    this.options = this._mergeOptions(options);
 
     image.src = imageElement.src;
     image.addEventListener("load", function () {
@@ -134,6 +121,58 @@ var Chromata = (function () {
       enumerable: true,
       configurable: true
     },
+    _mergeOptions: {
+
+      /**
+       * Merge any user-supplied config options with the defaults and perform some validation.
+       * @param options
+       * @private
+       */
+      value: function MergeOptions(options) {
+        var defaults = {
+          backgroundColor: "rgba(255, 255, 255, 0)",
+          colorMode: "color",
+          compositeOperation: "lighten",
+          iterationLimit: 0,
+          key: "low",
+          lineWidth: 2,
+          lineMode: "smooth",
+          origin: ["bottom"],
+          outputSize: "original",
+          pathFinderCount: 30,
+          speed: 7,
+          turningAngle: Math.PI
+        };
+
+        var merged = {};
+
+        for (var prop in defaults) {
+          if (defaults.hasOwnProperty(prop)) {
+            merged[prop] = options[prop] || defaults[prop];
+          }
+        }
+
+        // some validation
+        merged.origin = merged.origin.constructor === Array ? merged.origin : defaults.origin;
+        merged.pathFinderCount = this._limitToRange(merged.pathFinderCount, 1, 10000);
+        merged.lineWidth = this._limitToRange(merged.lineWidth, 1, 100);
+        merged.speed = this._limitToRange(merged.speed, 1, 100);
+        merged.turningAngle = this._limitToRange(merged.turningAngle, 0.1, 10);
+
+        return merged;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    _limitToRange: {
+      value: function LimitToRange(val, low, high) {
+        return Math.min(Math.max(val, low), high);
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
     _appendRenderCanvas: {
 
       /**
@@ -194,6 +233,11 @@ var Chromata = (function () {
         });
 
         this._tick = function () {
+          if (0 < _this3.options.iterationLimit && _this3.options.iterationLimit <= _this3.iterationCount) {
+            _this3.isRunning = false;
+            _this3.options.iterationLimit = 0;
+          }
+
           renderers.forEach(function (renderer) {
             return renderer.drawNextLine();
           });
