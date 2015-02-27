@@ -1,3 +1,5 @@
+(function(window, undefined){
+
 "use strict";
 
 var _prototypeProperties = function (child, staticProps, instanceProps) {
@@ -426,6 +428,8 @@ var Chromata = (function () {
 
   return Chromata;
 })();
+
+window.Chromata = Chromata;
 
 var MAX = 255;
 
@@ -1004,3 +1008,4 @@ var Utils = (function () {
 
   return Utils;
 })();
+})(window);

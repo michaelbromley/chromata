@@ -4,6 +4,7 @@ var to5 = require('gulp-6to5');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
+var wrap = require('gulp-wrap');
 
 gulp.task('scripts', function () {
     return gulp.src([
@@ -57,6 +58,7 @@ gulp.task('dist', function() {
         .pipe(to5({
             modules: 'ignore'
         }))
+        .pipe(wrap('(function(window, undefined){\n\n<%= contents %>\n})(window);'))
         .pipe(gulp.dest('./dist'))
         .pipe(uglify())
         .pipe(rename('chromata.min.js'))

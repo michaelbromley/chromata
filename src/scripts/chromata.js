@@ -3,7 +3,7 @@ import PathFinder from 'scripts/pathFinder';
 import PathRenderer from 'scripts/pathRenderer';
 
 
-export default class Chromata {
+class Chromata {
 
     constructor(imageElement, options = {}) {
         var renderCanvas = document.createElement('canvas'),
@@ -320,3 +320,5 @@ export default class Chromata {
         }
     }
 }
+
+window.Chromata = Chromata;
