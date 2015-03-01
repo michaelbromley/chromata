@@ -85,7 +85,8 @@ export default class PathFinder {
             }
 
             if (deviance === 0) {
-                if (this.pixelArray[y][x][3] === MAX) {
+                let pa = this.pixelArray;
+                if (pa[y] && pa[y][x] && pa[y][x][3] === MAX) {
                     defaultNextPixel = [x, y, MAX - colorDistance];
                 } else {
                     defaultNextPixel = this.pathQueue.get(-2);
