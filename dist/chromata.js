@@ -132,7 +132,6 @@ var Chromata = (function () {
        */
       value: function MergeOptions(options) {
         var defaults = {
-          backgroundColor: "rgba(255, 255, 255, 0)",
           colorMode: "color",
           compositeOperation: "lighten",
           iterationLimit: 0,
@@ -185,8 +184,6 @@ var Chromata = (function () {
         var parentElement = this.sourceImageElement.parentNode;
 
         this.sourceImageElement.style.display = "none";
-        this.renderContext.fillStyle = this.options.backgroundColor;
-        this.renderContext.fillRect(0, 0, this.dimensions.width, this.dimensions.height);
         parentElement.insertBefore(this.renderContext.canvas, this.sourceImageElement.nextSibling);
       },
       writable: true,
