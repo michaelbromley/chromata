@@ -763,8 +763,10 @@ var PathRenderer = (function () {
       value: function drawNextLine() {
         if (this.options.lineMode === "smooth") {
           this._drawLineSmooth();
-        } else {
+        } else if (this.options.lineMode === "square") {
           this._drawLineSquare();
+        } else {
+          this._drawPoint();
         }
       },
       writable: true,
@@ -841,6 +843,32 @@ var PathRenderer = (function () {
             this.context.stroke();
           }
           this.currentPoint = nextPoint;
+        }
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    _drawPoint: {
+      value: function DrawPoint() {
+        var lineLength, nextPoint = this.pathFinder.getNextPoint(this.context);
+
+        if (nextPoint) {
+          if (typeof this.currentPoint === "undefined") {
+            this.currentPoint = nextPoint;
+          }
+
+          lineLength = this._getLineLength(this.currentPoint, nextPoint);
+
+          if (lineLength >= this.options.speed * 2) {
+            this.context.beginPath();
+
+            this.context.arc(nextPoint[0], nextPoint[1], this.options.lineWidth, 0, 2 * Math.PI, false);
+            this.context.fillStyle = this._getStrokeColor(nextPoint[2]);
+            this.context.fill();
+
+            this.currentPoint = nextPoint;
+          }
         }
       },
       writable: true,
