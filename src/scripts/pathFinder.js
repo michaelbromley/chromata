@@ -134,22 +134,21 @@ export default class PathFinder {
         var projectedX = this.x + this.velocity[0],
             projectedY = this.y + this.velocity[1],
             margin = this.options.speed,
+            dy = this.y + this.velocity[1] - this.y,
+            dx = this.x + this.velocity[0] - this.x,
             angle;
 
-        if (projectedX <= margin) {
-            angle = 0;
-        } else if (this.arrayWidth - margin <= projectedX) {
-            angle = Math.PI;
-        } else if (projectedY <= margin) {
-            angle = Math.PI / 2;
-        } else if (this.arrayHeight - margin <= projectedY) {
-            angle = 3 / 2 * Math.PI;
-        } else {
-            let  dy = this.y + this.velocity[1] - this.y;
-            let  dx = this.x + this.velocity[0] - this.x;
-            angle = Math.atan2(dy, dx);
+        // has it gone out of bounds on the x axis?
+        if (projectedX <= margin || this.arrayWidth - margin <= projectedX) {
+            dx *= -1;
         }
 
+        // has it gone out of bounds on the y axis?
+        if (projectedY <= margin || this.arrayHeight - margin <= projectedY) {
+            dy *= -1;
+        }
+
+        angle = Math.atan2(dy, dx);
         return angle;
     }
 

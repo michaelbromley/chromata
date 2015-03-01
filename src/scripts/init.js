@@ -6,13 +6,13 @@ var image = document.querySelector('#image'),
     chromata;
 
 chromata = new Chromata(image, {
-    pathFinderCount: 9,
+    pathFinderCount: 300,
     speed: 9,
-    turningAngle: Math.PI/0.5,
+    turningAngle: Math.PI/2,
     colorMode: 'color',
-    lineWidth: 18,
-    lineMode: 'point',
-    compositeOperation: 'default',
+    lineWidth: 4,
+    lineMode: 'square',
+    compositeOperation: 'saturation',
     origin: ['50% 50%'],
     outputSize: 'container', // original, container
     key: 'low',
