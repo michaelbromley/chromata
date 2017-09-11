@@ -1,6 +1,6 @@
-import Utils from 'scripts/utils';
-import PathFinder from 'scripts/pathFinder';
-import PathRenderer from 'scripts/pathRenderer';
+import Utils from './utils';
+import PathFinder from './pathFinder';
+import PathRenderer from './pathRenderer';
 
 
 export default class Chromata {

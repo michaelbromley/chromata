@@ -1,4 +1,4 @@
-import PathQueue from 'scripts/pathQueue';
+import PathQueue from './pathQueue';
 
 const MAX = 255;
 

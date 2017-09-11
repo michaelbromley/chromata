@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <title>Chromata: build test page</title>
 
-    <script src="vendor/system.js"></script>
-    <script>
-      System.transpiler = '6to5';
-    </script>
-
     <style>
         body {
             background-color: white;
@@ -26,14 +21,12 @@
 <body>
 
 <div class="container">
-    <img src="assets/images/pattern.jpg" id="image">
+    <img src="assets/images/nyc.jpg" id="image">
 </div>
 <button id="toggle">Toggle</button><br>
 <button id="reset">Reset</button><br>
 <!-- inject:js -->
 <!-- endinject -->
-<script>
-    System.import('scripts/init');
-</script>
+<script src="app.bundle.js"></script>
 </body>
 </html>

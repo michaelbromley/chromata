@@ -1,4 +1,4 @@
-import Chromata from 'scripts/chromata';
+import Chromata from './chromata';
 
 const imageUrl = 'assets/images/face.jpg';
 
