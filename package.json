@@ -9,10 +9,12 @@
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.0",
+    "copy-webpack-plugin": "^4.0.1",
+    "rimraf": "^2.6.2",
     "webpack": "^3.5.6"
   },
   "scripts": {
-    "watch": "webpack -w"
+    "watch": "rimraf ./build && webpack -w"
   },
   "repository": {
     "type": "git",
