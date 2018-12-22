@@ -21,7 +21,7 @@ var Chromata = (function () {
 
     this.options = this._mergeOptions(options);
 
-    image.src = imageElement.src;
+    image.crossOrigin = "Anonymous"; 
     image.addEventListener("load", function () {
       dimensions = Utils._getOutputDimensions(imageElement, _this.options.outputSize);
       sourceCanvas.width = renderCanvas.width = dimensions.width;
@@ -34,6 +34,7 @@ var Chromata = (function () {
 
       ready = true;
     });
+    image.src = imageElement.src;
 
     this.loader = function (callback) {
       if (!ready) {
