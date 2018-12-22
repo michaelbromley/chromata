@@ -16,7 +16,7 @@ export default class Chromata {
 
         this.options = this._mergeOptions(options);
 
-        image.src = imageElement.src;
+        image.crossOrigin = "Anonymous";
         image.addEventListener('load', () => {
             dimensions = Utils._getOutputDimensions(imageElement, this.options.outputSize);
             sourceCanvas.width = renderCanvas.width = dimensions.width;
@@ -29,6 +29,7 @@ export default class Chromata {
 
             ready = true;
         });
+        image.src = imageElement.src;
 
         this.loader = callback => {
             if (!ready) {
