@@ -13,7 +13,8 @@ export default class Chromata {
             image = new Image(),
             dimensions,
             ready = false;
-
+        renderCanvas.setAttribute("id", "chromataCanvas");
+        
         this.options = this._mergeOptions(options);
 
         image.crossOrigin = "Anonymous";
