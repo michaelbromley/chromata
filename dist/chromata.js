@@ -17,7 +17,8 @@ var Chromata = (function () {
         sourceContext = sourceCanvas.getContext("2d"),
         image = new Image(),
         dimensions,
-        ready = false;
+        ready = false;  
+    renderCanvas.setAttribute("id", "chromataCanvas");
 
     this.options = this._mergeOptions(options);
 
